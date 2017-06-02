@@ -168,3 +168,15 @@ def stamp(pdf_path, stamp_pdf_path, output_pdf_path=None):
     args = [PDFTK_PATH, pdf_path, 'multistamp', stamp_pdf_path, 'output', output]
     run_command(args)
     return output
+
+def get_fdf(pdf_path):
+    '''
+    Get a list of fdf form fields in PDF file.
+    '''
+    cmd = "%s %s dump_data_fields" % (PDFTK_PATH, pdf_path)
+    out = run_command(cmd, True)
+    fields = []
+    for line in out:
+        if(line.startswith("FieldName:")):
+            fields.append(line.split(":",1)[-1].strip())
+    return fields
