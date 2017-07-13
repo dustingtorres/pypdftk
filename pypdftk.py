@@ -56,13 +56,27 @@ def get_num_pages(pdf_path):
     return 0
 
 
+def force_value(value, field_type):
+    if(field_type == "Button"):
+        if(value):
+            return "Yes"
+        else:
+            return "No"
+    return value
+
+
 def fill_form(pdf_path, datas={}, out_file=None, flatten=True):
     '''
         Fills a PDF form with given dict input data.
         Return temp file if no out_file provided.
     '''
     cleanOnFail = False
-    tmp_fdf = gen_xfdf(datas)
+    field_types = get_field_types(pdf_path)
+    data_cast = datas.copy()
+    for k, v in data_cast.iteritems():
+        if(k in field_types):
+            data_cast[k] = force_value(data_cast[k], field_types[k])
+    tmp_fdf = gen_xfdf(data_cast)
     handle = None
     if not out_file:
         cleanOnFail = True
@@ -180,3 +194,26 @@ def get_fdf(pdf_path):
         if(line.startswith("FieldName:")):
             fields.append(line.split(":",1)[-1].strip())
     return fields
+
+
+def get_field_types(pdf_path):
+    '''
+    Get field types for each fillable field.
+    '''
+    cmd = "%s %s dump_data_fields" % (PDFTK_PATH, pdf_path)
+    out = run_command(cmd, True)
+    field_types = {}
+    field_name = ""
+    field_type = ""
+    for line in out:
+        if(line.startswith("---")):
+            field_name = ""
+            field_type = ""
+        if(line.startswith("FieldName:")):
+            field_name = line.split(":", 1)[-1].strip()
+        if(line.startswith("FieldType:")):
+            field_type = line.split(":", 1)[-1].strip()
+        if(field_type and field_name):
+            field_types[field_name] = field_type
+
+    return field_types
