@@ -62,6 +62,12 @@ def force_value(value, field_type):
             return "Yes"
         else:
             return "No"
+    if(isinstance(value, bool)):
+        # If boolean value, change to Y or N
+        if(value == True):
+            return "Y"
+        if(value == False):
+            return "N"
     return value
 
 
