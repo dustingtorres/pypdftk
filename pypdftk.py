@@ -12,6 +12,7 @@ import os
 import subprocess
 import tempfile
 import shutil
+import fdfgen
 
 log = logging.getLogger(__name__)
 
@@ -149,18 +150,10 @@ def split(pdf_path, out_dir=None):
 
 def gen_xfdf(datas={}):
     ''' Generates a temp XFDF file suited for fill_form function, based on dict input data '''
-    fields = []
-    for key, value in datas.items():
-        fields.append(u"""<field name="%s"><value>%s</value></field>""" % (key, value))
-    tpl = u"""<?xml version="1.0" encoding="UTF-8"?>
-    <xfdf xmlns="http://ns.adobe.com/xfdf/" xml:space="preserve">
-        <fields>
-            %s
-        </fields>
-    </xfdf>""" % "\n".join(fields)
+    tpl = fdfgen.forge_fdf(None, datas)
     handle, out_file = tempfile.mkstemp()
     f = open(out_file, 'w')
-    f.write(tpl.encode('UTF-8'))
+    f.write(tpl)
     f.close()
     return out_file
 
