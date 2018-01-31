@@ -13,6 +13,7 @@ import subprocess
 import tempfile
 import shutil
 import fdfgen
+from collections import OrderedDict
 
 log = logging.getLogger(__name__)
 
@@ -182,37 +183,44 @@ def stamp(pdf_path, stamp_pdf_path, output_pdf_path=None):
     run_command(args)
     return output
 
+def fields(pdf_path):
+    cmd = "%s %s dump_data_fields" % (PDFTK_PATH, pdf_path)
+    out = run_command(cmd, True)
+    field_data = {}
+    for line in out:
+        if(line.startswith("---") and field_data):
+            yield field_data
+            field_data = {}
+        elif(not line.startswith("---") and line.strip()):
+            (field_prop, value) = line.split(":", 1)
+            if(field_prop in field_data):
+                if(not isinstance(field_data[field_prop], list)):
+                    field_data[field_prop] = [field_data[field_prop]]
+                field_data[field_prop].append(value.strip())
+            else:
+                field_data[field_prop] = value.strip()
+
+
 def get_fdf(pdf_path):
     '''
     Get a list of fdf form fields in PDF file.
     '''
-    cmd = "%s %s dump_data_fields" % (PDFTK_PATH, pdf_path)
-    out = run_command(cmd, True)
-    fields = []
-    for line in out:
-        if(line.startswith("FieldName:")):
-            fields.append(line.split(":",1)[-1].strip())
-    return fields
+    fdf_fields = OrderedDict()
+    for field in fields(pdf_path):
+        field_name = field["FieldName"]
+        field_value = field.get("FieldValue", "")
+        fdf_fields[field_name] = field_value
+    return fdf_fields
 
 
 def get_field_types(pdf_path):
     '''
     Get field types for each fillable field.
     '''
-    cmd = "%s %s dump_data_fields" % (PDFTK_PATH, pdf_path)
-    out = run_command(cmd, True)
     field_types = {}
-    field_name = ""
-    field_type = ""
-    for line in out:
-        if(line.startswith("---")):
-            field_name = ""
-            field_type = ""
-        if(line.startswith("FieldName:")):
-            field_name = line.split(":", 1)[-1].strip()
-        if(line.startswith("FieldType:")):
-            field_type = line.split(":", 1)[-1].strip()
-        if(field_type and field_name):
-            field_types[field_name] = field_type
+    for field in fields(pdf_path):
+        field_name = field["FieldName"]
+        field_type = field["FieldType"]
+        field_types[field_name] = field_type
 
     return field_types
