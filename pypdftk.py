@@ -193,12 +193,13 @@ def fields(pdf_path):
             field_data = {}
         elif(not line.startswith("---") and line.strip()):
             (field_prop, value) = line.split(":", 1)
-            if(field_prop in field_data):
-                if(not isinstance(field_data[field_prop], list)):
-                    field_data[field_prop] = [field_data[field_prop]]
-                field_data[field_prop].append(value.strip())
-            else:
-                field_data[field_prop] = value.strip()
+            if(value.strip()):
+                if(field_prop in field_data):
+                    if(not isinstance(field_data[field_prop], list)):
+                        field_data[field_prop] = [field_data[field_prop]]
+                    field_data[field_prop].append(value.strip())
+                else:
+                    field_data[field_prop] = value.strip()
 
 
 def get_fdf(pdf_path):
