@@ -65,7 +65,7 @@ def force_value(value, field):
         The main function is to check the checkboxes given a boolean value.
         By default it looks for variations of "Yes", "True" and "1"
     '''
-    if(field["FieldType"] == "Button" ):
+    if(field.get("FieldType", "") == "Button" ):
         if((int(field.get("FieldFlags",0)) & RADIO_FLAG) == RADIO_FLAG):
             # Radio's just return "Yes" or "No" for bools
             if(isinstance(value, bool)):
@@ -250,7 +250,7 @@ def get_field_types(pdf_path):
     field_types = {}
     for field in get_fields(pdf_path):
         field_name = field["FieldName"]
-        field_type = field["FieldType"]
+        field_type = field.get("FieldType", "")
         field_types[field_name] = field_type
 
     return field_types
