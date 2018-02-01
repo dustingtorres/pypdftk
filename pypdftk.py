@@ -65,7 +65,14 @@ def force_value(value, field):
         The main function is to check the checkboxes given a boolean value.
         By default it looks for variations of "Yes", "True" and "1"
     '''
-    if(field["FieldType"] == "Button" and (int(field.get("FieldFlags",0)) & RADIO_FLAG) == 0):
+    if(field["FieldType"] == "Button" ):
+        if((int(field.get("FieldFlags",0)) & RADIO_FLAG) == RADIO_FLAG):
+            # Radio's just return "Yes" or "No" for bools
+            if(isinstance(value, bool)):
+                return "Yes" if value else "No"
+            return value
+
+        # Otherwise checkbox
         if(value):
             acceptable_checks = set(["1", "Yes", "True", "YES", "TRUE", "yes", "true"])
             check_values = set(field.get("FieldStateOption", [])) & acceptable_checks
