@@ -65,8 +65,7 @@ def force_value(value, field):
         The main function is to check the checkboxes given a boolean value.
         By default it looks for variations of "Yes", "True" and "1"
     '''
-    #if(field["FieldType"] == "Button" and (int(field.get("FieldFlags",0)) & RADIO_FLAG) == 0):
-    if(field["FieldType"] == "Button"):
+    if(field["FieldType"] == "Button" and (int(field.get("FieldFlags",0)) & RADIO_FLAG) == 0):
         if(value):
             acceptable_checks = set(["1", "Yes", "True", "YES", "TRUE", "yes", "true"])
             check_values = set(field.get("FieldStateOption", [])) & acceptable_checks
@@ -213,6 +212,9 @@ def get_fields(pdf_path):
                     field_data[field_prop].append(value.strip())
                 else:
                     field_data[field_prop] = value.strip()
+    if(field_data):
+        # The last one
+        yield field_data
 
 
 def get_dump_data(pdf_path):
