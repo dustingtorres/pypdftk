@@ -16,6 +16,7 @@ import fdfgen
 from collections import OrderedDict
 
 log = logging.getLogger(__name__)
+RADIO_FLAG = 0x8000
 
 if os.getenv('PDFTK_PATH'):
     PDFTK_PATH = os.getenv('PDFTK_PATH')
@@ -58,12 +59,24 @@ def get_num_pages(pdf_path):
     return 0
 
 
-def force_value(value, field_type):
-    if(field_type == "Button"):
+def force_value(value, field):
+    '''
+        Given a value and a field force it to be of the correct time.
+        The main function is to check the checkboxes given a boolean value.
+        By default it looks for variations of "Yes", "True" and "1"
+    '''
+    #if(field["FieldType"] == "Button" and (int(field.get("FieldFlags",0)) & RADIO_FLAG) == 0):
+    if(field["FieldType"] == "Button"):
         if(value):
+            acceptable_checks = set(["1", "Yes", "True", "YES", "TRUE", "yes", "true"])
+            check_values = set(field.get("FieldStateOption", [])) & acceptable_checks
+            for any_check_value in check_values:
+                return any_check_value
+            # None was found, return "Yes" for consistency but
+            # there is no way this check box will be checked.
             return "Yes"
         else:
-            return "No"
+            return "Off"
     if(isinstance(value, bool)):
         # If boolean value, change to Y or N
         if(value == True):
@@ -79,11 +92,11 @@ def fill_form(pdf_path, datas={}, out_file=None, flatten=True):
         Return temp file if no out_file provided.
     '''
     cleanOnFail = False
-    field_types = get_field_types(pdf_path)
+    fields = get_dump_data(pdf_path)
     data_cast = datas.copy()
     for k, v in data_cast.iteritems():
-        if(k in field_types):
-            data_cast[k] = force_value(data_cast[k], field_types[k])
+        if(k in fields):
+            data_cast[k] = force_value(data_cast[k], fields[k])
     tmp_fdf = gen_xfdf(data_cast)
     handle = None
     if not out_file:
@@ -183,7 +196,7 @@ def stamp(pdf_path, stamp_pdf_path, output_pdf_path=None):
     run_command(args)
     return output
 
-def fields(pdf_path):
+def get_fields(pdf_path):
     cmd = "%s %s dump_data_fields" % (PDFTK_PATH, pdf_path)
     out = run_command(cmd, True)
     field_data = {}
@@ -202,12 +215,19 @@ def fields(pdf_path):
                     field_data[field_prop] = value.strip()
 
 
+def get_dump_data(pdf_path):
+    dump_data = {}
+    for field in get_fields(pdf_path):
+        field_name = field["FieldName"]
+        dump_data[field_name] = field
+    return dump_data
+
 def get_fdf(pdf_path):
     '''
     Get a list of fdf form fields in PDF file.
     '''
     fdf_fields = OrderedDict()
-    for field in fields(pdf_path):
+    for field in get_fields(pdf_path):
         field_name = field["FieldName"]
         field_value = field.get("FieldValue", "")
         fdf_fields[field_name] = field_value
@@ -219,7 +239,7 @@ def get_field_types(pdf_path):
     Get field types for each fillable field.
     '''
     field_types = {}
-    for field in fields(pdf_path):
+    for field in get_fields(pdf_path):
         field_name = field["FieldName"]
         field_type = field["FieldType"]
         field_types[field_name] = field_type
