@@ -74,7 +74,7 @@ def force_value(value, field):
 
         # Otherwise checkbox
         if(value):
-            acceptable_checks = set(["1", "Yes", "True", "YES", "TRUE", "yes", "true"])
+            acceptable_checks = set(["1", "Yes", "True", "YES", "TRUE", "yes", "true", "On", "on"])
             check_values = set(field.get("FieldStateOption", [])) & acceptable_checks
             for any_check_value in check_values:
                 return any_check_value
