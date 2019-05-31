@@ -102,7 +102,7 @@ def fill_form(pdf_path, datas={}, out_file=None, flatten=True):
     cleanOnFail = False
     fields = get_dump_data(pdf_path)
     data_cast = datas.copy()
-    for k, v in data_cast.iteritems():
+    for k, v in data_cast.items():
         if(k in fields):
             data_cast[k] = force_value(data_cast[k], fields[k])
     tmp_fdf = gen_xfdf(data_cast)
@@ -135,7 +135,7 @@ def dump_data_fields(pdf_path):
     #    field_data = map(lambda x: x.decode("utf-8").split(': ', 1), run_command(cmd, True))
     # Or return bytes with : (will break tests)
     #    field_data = map(lambda x: x.split(b': ', 1), run_command(cmd, True))
-    field_data = map(lambda x: x.decode("utf-8").split(': ', 1), run_command(cmd, True))
+    field_data = [x.decode("utf-8").split(': ', 1) for x in run_command(cmd, True)]
     fields = [list(group) for k, group in itertools.groupby(field_data, lambda x: len(x) == 1) if not k]
     return [dict(f) for f in fields]
 
