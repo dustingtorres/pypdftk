@@ -189,10 +189,11 @@ def split(pdf_path, out_dir=None):
 
 def gen_xfdf(datas={}):
     ''' Generates a temp XFDF file suited for fill_form function, based on dict input data '''
+    # Byte string passed back from fdfgen
     tpl = fdfgen.forge_fdf(None, datas)
     handle, out_file = tempfile.mkstemp()
     f = os.fdopen(handle, 'wb')
-    f.write((tpl.encode('UTF-8')))
+    f.write(tpl)
     f.close()
     return out_file
 
