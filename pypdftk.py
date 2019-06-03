@@ -238,11 +238,12 @@ def get_fields(pdf_path):
     out = run_command(cmd, True)
     field_data = {}
     for line in out:
-        if(line.startswith("---") and field_data):
+        decoded_line = line.decode("utf-8")
+        if(decoded_line.startswith("---") and field_data):
             yield field_data
             field_data = {}
-        elif(not line.startswith("---") and line.strip()):
-            (field_prop, value) = line.split(":", 1)
+        elif(not decoded_line.startswith("---") and decoded_line.strip()):
+            (field_prop, value) = decoded_line.split(":", 1)
             if(value.strip()):
                 if(field_prop in field_data):
                     if(not isinstance(field_data[field_prop], list)):
