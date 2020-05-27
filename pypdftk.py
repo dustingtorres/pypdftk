@@ -130,7 +130,7 @@ def dump_data_fields(pdf_path):
     '''
         Return list of dicts of all fields in a PDF.
     '''
-    cmd = "%s %s dump_data_fields" % (PDFTK_PATH, pdf_path)
+    cmd = "%s %s dump_data_fields_utf8" % (PDFTK_PATH, pdf_path)
     # Either can return strings with :
     #    field_data = map(lambda x: x.decode("utf-8").split(': ', 1), run_command(cmd, True))
     # Or return bytes with : (will break tests)
@@ -235,7 +235,7 @@ def stamp(pdf_path, stamp_pdf_path, output_pdf_path=None):
     return output
 
 def get_fields(pdf_path):
-    cmd = "%s %s dump_data_fields" % (PDFTK_PATH, pdf_path)
+    cmd = "%s %s dump_data_fields_utf8" % (PDFTK_PATH, pdf_path)
     out = run_command(cmd, True)
     field_data = {}
     for line in out:
