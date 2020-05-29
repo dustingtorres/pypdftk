@@ -246,6 +246,10 @@ def get_fields(pdf_path):
             field_data = {}
         elif(not decoded_line.startswith("---") and decoded_line.strip()):
             (field_prop, value) = decoded_line.split(":", 1)
+            # field names are escaped by pdftk. Using the utf8 versions of pdftk
+            # allows for newlines which will mess up the parsing above with the
+            # split on new line. So we are using the non-utf8 version and then
+            # unescaping the values to get the true results back.
             value = html.unescape(value)
             if(value.strip()):
                 if(field_prop in field_data):
