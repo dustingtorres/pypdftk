@@ -16,6 +16,7 @@ import shutil
 import fdfgen
 from collections import OrderedDict
 import itertools
+import html
 
 log = logging.getLogger(__name__)
 RADIO_FLAG = 0x8000
@@ -130,7 +131,7 @@ def dump_data_fields(pdf_path):
     '''
         Return list of dicts of all fields in a PDF.
     '''
-    cmd = "%s %s dump_data_fields_utf8" % (PDFTK_PATH, pdf_path)
+    cmd = "%s %s dump_data_fields" % (PDFTK_PATH, pdf_path)
     # Either can return strings with :
     #    field_data = map(lambda x: x.decode("utf-8").split(': ', 1), run_command(cmd, True))
     # Or return bytes with : (will break tests)
@@ -235,7 +236,7 @@ def stamp(pdf_path, stamp_pdf_path, output_pdf_path=None):
     return output
 
 def get_fields(pdf_path):
-    cmd = "%s %s dump_data_fields_utf8" % (PDFTK_PATH, pdf_path)
+    cmd = "%s %s dump_data_fields" % (PDFTK_PATH, pdf_path)
     out = run_command(cmd, True)
     field_data = {}
     for line in out:
@@ -245,6 +246,7 @@ def get_fields(pdf_path):
             field_data = {}
         elif(not decoded_line.startswith("---") and decoded_line.strip()):
             (field_prop, value) = decoded_line.split(":", 1)
+            value = html.unescape(value)
             if(value.strip()):
                 if(field_prop in field_data):
                     if(not isinstance(field_data[field_prop], list)):
