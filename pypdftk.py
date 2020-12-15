@@ -236,28 +236,56 @@ def stamp(pdf_path, stamp_pdf_path, output_pdf_path=None):
     return output
 
 def get_fields(pdf_path):
-    cmd = "%s %s dump_data_fields" % (PDFTK_PATH, pdf_path)
+    """
+    Get all attributes from dump_data_fields in python dictionary.
+
+    Format from dump_data_fields is of the form:
+    ---
+    FieldType: Text
+    FieldName: PdfName
+    FieldNameAlt: Some field that can include:
+        - whitespaces
+        - Special Characters
+        - And more colons :
+    ---
+
+    To get all the data we look for a --- and then split on :
+    The left side of the split is the field name. The rest is the value
+    We keep appending to value (since it can be multi line) until we see another
+    --- or a line that starts with "Field".
+
+    pdftk 2.02 allows for getting data without utf_8 and it will not contain
+    newlines between fields. The sucessor (pdftk-java) does not have an option
+    to not show newlines.
+    """
+    cmd = "%s %s dump_data_fields_utf8" % (PDFTK_PATH, pdf_path)
     out = run_command(cmd, True)
     field_data = {}
+    parsing_value = False
     for line in out:
         decoded_line = line.decode("utf-8")
+        if(parsing_value):
+            if(decoded_line.startswith("---") or decoded_line.startswith("Field")):
+                parsing_value = False
+                if(value.strip()):
+                    if(field_prop in field_data):
+                        if(not isinstance(field_data[field_prop], list)):
+                            field_data[field_prop] = [field_data[field_prop]]
+                        field_data[field_prop].append(value.strip())
+                    else:
+                        field_data[field_prop] = value.strip()
+            else:
+                value += "\n{}".format(decoded_line.strip())
+                continue
+
+
         if(decoded_line.startswith("---") and field_data):
             yield field_data
             field_data = {}
         elif(not decoded_line.startswith("---") and decoded_line.strip()):
             (field_prop, value) = decoded_line.split(":", 1)
-            # field names are escaped by pdftk. Using the utf8 versions of pdftk
-            # allows for newlines which will mess up the parsing above with the
-            # split on new line. So we are using the non-utf8 version and then
-            # unescaping the values to get the true results back.
-            value = html.unescape(value)
-            if(value.strip()):
-                if(field_prop in field_data):
-                    if(not isinstance(field_data[field_prop], list)):
-                        field_data[field_prop] = [field_data[field_prop]]
-                    field_data[field_prop].append(value.strip())
-                else:
-                    field_data[field_prop] = value.strip()
+            parsing_value = True
+
     if(field_data):
         # The last one
         yield field_data
